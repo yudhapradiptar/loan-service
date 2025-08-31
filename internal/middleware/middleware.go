@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"loan-service/internal/models"
+	"loan-service/internal/dto"
 )
 
 type ResponseWriter struct {
@@ -47,13 +47,9 @@ func ErrorMiddleware(next http.Handler) http.Handler {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 
-				errorResponse := models.APIResponse{
-					Object: "error",
-					Error: &models.APIError{
-						Type:    "api_error",
-						Code:    "internal_server_error",
-						Message: "An unexpected error occurred",
-					},
+				errorResponse := dto.APIError{
+					Message: "An unexpected error occurred",
+					Error:   "internal_server_error",
 				}
 
 				json.NewEncoder(w).Encode(errorResponse)

@@ -19,8 +19,8 @@ type Server struct {
 	config        *config.Config
 	logger        *logrus.Logger
 	db            *database.Database
-	loanHandler   *handlers.LoanHandler
-	healthHandler *handlers.HealthHandler
+	loanHandler   handlers.LoanHandlerInterface
+	healthHandler handlers.HealthHandlerInterface
 }
 
 func New(cfg *config.Config) *Server {
@@ -58,9 +58,12 @@ func (s *Server) setupRoutes() http.Handler {
 
 	api.HandleFunc("/loans", s.loanHandler.GetAllLoans).Methods(http.MethodGet)
 	api.HandleFunc("/loans", s.loanHandler.CreateLoan).Methods(http.MethodPost)
-	api.HandleFunc("/loans/{id}", s.loanHandler.GetLoanByID).Methods(http.MethodGet)
-	api.HandleFunc("/loans/{id}", s.loanHandler.UpdateLoan).Methods(http.MethodPut)
-	api.HandleFunc("/loans/{id}", s.loanHandler.DeleteLoan).Methods(http.MethodDelete)
+	api.HandleFunc("/loans/{uuid}", s.loanHandler.GetLoanByUUID).Methods(http.MethodGet)
+
+	api.HandleFunc("/loans/{uuid}/approve", s.loanHandler.ApproveLoan).Methods(http.MethodPost)
+
+	api.HandleFunc("/loans/{uuid}/invest", s.loanHandler.InvestLoan).Methods(http.MethodPost)
+	api.HandleFunc("/loans/{uuid}/disburse", s.loanHandler.DisburseLoan).Methods(http.MethodPost)
 
 	return router
 }
