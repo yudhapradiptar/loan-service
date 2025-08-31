@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"loan-service/internal/config"
 	"net/http"
 	"time"
 )
@@ -32,13 +33,13 @@ type Attachment struct {
 	Type     string `json:"type"`
 }
 
-func NewNotificationClient(baseURL, apiKey string) *NotificationClient {
+func NewNotificationClient(cfg *config.NotificationConfig) *NotificationClient {
 	return &NotificationClient{
-		baseURL: baseURL,
+		baseURL: cfg.BaseURL,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		apiKey: apiKey,
+		apiKey: cfg.APIKey,
 	}
 }
 

@@ -18,9 +18,13 @@ type LoanService struct {
 	notificationClient client.NotificationClientInterface
 }
 
-func NewLoanService(repo repository.LoanRepositoryInterface) *LoanService {
+// Ensure LoanService implements LoanServiceInterface
+var _ LoanServiceInterface = (*LoanService)(nil)
+
+func NewLoanService(repo repository.LoanRepositoryInterface, notificationClient client.NotificationClientInterface) *LoanService {
 	return &LoanService{
-		repo: repo,
+		repo:               repo,
+		notificationClient: notificationClient,
 	}
 }
 

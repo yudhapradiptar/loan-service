@@ -7,19 +7,22 @@ import (
 	"loan-service/internal/dto"
 	"loan-service/internal/service"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
 
 type LoanHandler struct {
 	loanService *service.LoanService
+	validator   *validator.Validate
 }
 
 // Ensure LoanHandler implements LoanHandlerInterface
 var _ LoanHandlerInterface = (*LoanHandler)(nil)
 
-func NewLoanHandler(loanService *service.LoanService) *LoanHandler {
+func NewLoanHandler(loanService *service.LoanService, validator *validator.Validate) *LoanHandler {
 	return &LoanHandler{
 		loanService: loanService,
+		validator:   validator,
 	}
 }
 
@@ -30,9 +33,14 @@ func (h *LoanHandler) CreateLoan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.validator.Struct(req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
 	err := h.loanService.CreateLoan(r.Context(), &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -44,6 +52,7 @@ func (h *LoanHandler) CreateLoan(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LoanHandler) GetAllLoans(w http.ResponseWriter, r *http.Request) {
+	// TODO: implement filter and pagination
 	loans, err := h.loanService.GetAllLoans(r.Context())
 	if err != nil {
 		http.Error(w, "Failed to retrieve loans", http.StatusInternalServerError)
@@ -69,7 +78,7 @@ func (h *LoanHandler) GetLoanByUUID(w http.ResponseWriter, r *http.Request) {
 
 	loan, err := h.loanService.GetLoanByUUID(r.Context(), uuid)
 	if err != nil {
-		http.Error(w, "Loan not found", http.StatusNotFound)
+		http.Error(w, "Loan not found", http.StatusInternalServerError)
 		return
 	}
 
@@ -88,10 +97,26 @@ func (h *LoanHandler) ApproveLoan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement loan approval logic
+	var req dto.ApproveLoanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err := h.loanService.ApproveLoanWithValidators(r.Context(), req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dto.APIResponse{
-		Message: "Loan approval endpoint - not implemented yet",
+		Message: "Loan approved successfully",
 	})
 }
 
@@ -103,10 +128,26 @@ func (h *LoanHandler) InvestLoan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement loan investment logic
+	var req dto.InvestLoanRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err := h.loanService.InvestLoan(r.Context(), req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dto.APIResponse{
-		Message: "Loan investment endpoint - not implemented yet",
+		Message: "Loan invested successfully",
 	})
 }
 
@@ -118,9 +159,25 @@ func (h *LoanHandler) DisburseLoan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement loan disbursement logic
+	var req dto.CreateLoanDisbursementRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err := h.loanService.CreateLoanDisbursement(r.Context(), req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(dto.APIResponse{
-		Message: "Loan disbursement endpoint - not implemented yet",
+		Message: "Loan disbursement created successfully",
 	})
 }

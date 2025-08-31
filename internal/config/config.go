@@ -2,14 +2,14 @@ package config
 
 import (
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
+	Server       ServerConfig
+	Database     DatabaseConfig
+	Notification NotificationConfig
 }
 
 type ServerConfig struct {
@@ -23,6 +23,11 @@ type DatabaseConfig struct {
 	User     string
 	Password string
 	DBName   string
+}
+
+type NotificationConfig struct {
+	BaseURL string
+	APIKey  string
 }
 
 func LoadEnv() error {
@@ -42,21 +47,16 @@ func New() *Config {
 			Password: getEnv("DB_PASSWORD", "password"),
 			DBName:   getEnv("DB_NAME", "loan_service"),
 		},
+		Notification: NotificationConfig{
+			BaseURL: getEnv("NOTIFICATION_BASE_URL", "http://localhost:8080"),
+			APIKey:  getEnv("NOTIFICATION_API_KEY", "1234567890"),
+		},
 	}
 }
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
-	}
-	return defaultValue
-}
-
-func getEnvAsInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
 	}
 	return defaultValue
 }

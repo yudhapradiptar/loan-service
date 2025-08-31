@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"loan-service/internal/client"
 	"loan-service/internal/config"
 	"loan-service/internal/database"
 	"loan-service/internal/handlers"
@@ -11,6 +12,7 @@ import (
 	"loan-service/internal/repository"
 	"loan-service/internal/service"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -33,8 +35,10 @@ func New(cfg *config.Config) *Server {
 	}
 
 	loanRepo := repository.NewLoanRepository(db.DB)
-	loanService := service.NewLoanService(loanRepo)
-	loanHandler := handlers.NewLoanHandler(loanService)
+	notificationClient := client.NewNotificationClient(&cfg.Notification)
+	loanService := service.NewLoanService(loanRepo, notificationClient)
+	validator := validator.New()
+	loanHandler := handlers.NewLoanHandler(loanService, validator)
 	healthHandler := handlers.NewHealthHandler()
 
 	return &Server{
