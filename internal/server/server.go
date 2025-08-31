@@ -1,0 +1,75 @@
+package server
+
+import (
+	"fmt"
+	"net/http"
+
+	"loan-service/internal/config"
+	"loan-service/internal/database"
+	"loan-service/internal/handlers"
+	"loan-service/internal/middleware"
+	"loan-service/internal/repository"
+	"loan-service/internal/service"
+
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+)
+
+type Server struct {
+	config        *config.Config
+	logger        *logrus.Logger
+	db            *database.Database
+	loanHandler   *handlers.LoanHandler
+	healthHandler *handlers.HealthHandler
+}
+
+func New(cfg *config.Config) *Server {
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{})
+
+	db, err := database.New(cfg)
+	if err != nil {
+		logger.Fatal("Failed to initialize database:", err)
+	}
+
+	loanRepo := repository.NewLoanRepository(db.DB)
+	loanService := service.NewLoanService(loanRepo)
+	loanHandler := handlers.NewLoanHandler(loanService)
+	healthHandler := handlers.NewHealthHandler()
+
+	return &Server{
+		config:        cfg,
+		logger:        logger,
+		db:            db,
+		loanHandler:   loanHandler,
+		healthHandler: healthHandler,
+	}
+}
+
+func (s *Server) setupRoutes() http.Handler {
+	router := mux.NewRouter()
+
+	router.Use(middleware.LoggingMiddleware)
+	router.Use(middleware.ErrorMiddleware)
+
+	router.HandleFunc("/health", s.healthHandler.HealthCheck).Methods(http.MethodGet)
+
+	api := router.PathPrefix("/v1").Subrouter()
+
+	api.HandleFunc("/loans", s.loanHandler.GetAllLoans).Methods(http.MethodGet)
+	api.HandleFunc("/loans", s.loanHandler.CreateLoan).Methods(http.MethodPost)
+	api.HandleFunc("/loans/{id}", s.loanHandler.GetLoanByID).Methods(http.MethodGet)
+	api.HandleFunc("/loans/{id}", s.loanHandler.UpdateLoan).Methods(http.MethodPut)
+	api.HandleFunc("/loans/{id}", s.loanHandler.DeleteLoan).Methods(http.MethodDelete)
+
+	return router
+}
+
+func (s *Server) Start() error {
+	handler := s.setupRoutes()
+
+	addr := fmt.Sprintf("%s:%s", s.config.Server.Host, s.config.Server.Port)
+	s.logger.Infof("Starting server on %s", addr)
+
+	return http.ListenAndServe(addr, handler)
+}
