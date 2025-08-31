@@ -23,13 +23,35 @@ loan-service/
 ├── env.example           # Environment variables template
 ├── README.md             # Project documentation
 ├── migrations/            # Database migration files
+├── mocks/                # Generated mock files for testing
 └── internal/
     ├── config/           # Configuration management
-    ├── database/        # Database connection and setup
-    ├── handlers/        # HTTP request handlers
-    ├── models/          # Data models and structs
-    ├── repository/      # Data access layer
-    └── service/         # Business logic layer
+    │   └── config.go     # Configuration structs and loading
+    ├── server/           # HTTP server setup
+    │   └── server.go     # Server configuration and routing
+    ├── handlers/         # HTTP request handlers
+    │   ├── interfaces.go # Handler interfaces
+    │   ├── loan_handler.go # Loan domain handlers
+    │   └── health_handler.go # Health check handler
+    ├── middleware/       # HTTP middleware
+    │   └── middleware.go # Logging and error handling middleware
+    ├── models/           # Data models and structs
+    │   ├── models.go     # Core data models
+    │   └── enums.go      # Enum definitions
+    ├── repository/       # Data access layer
+    │   ├── interfaces.go # Repository interfaces
+    │   ├── loan.go       # Loan repository implementation
+    │   └── loan_test.go  # Repository unit tests
+    ├── service/          # Business logic layer
+    │   ├── interfaces.go # Service interfaces
+    │   ├── loan.go       # Loan service implementation
+    │   └── loan_test.go  # Service unit tests
+    ├── dto/              # Data Transfer Objects
+    │   ├── loan.go       # Loan request/response DTOs
+    │   └── response.go   # Common API response structures
+    └── client/           # External service clients
+        ├── interfaces.go # Client interfaces
+        └── notification_client.go # Notification service client
 ```
 
 ## Prerequisites
@@ -88,36 +110,66 @@ go run main.go
 ### Loans
 - `GET /v1/loans` - Get all loans
 - `POST /v1/loans` - Create new loan
-- `GET /v1/loans/{id}` - Get loan by ID
-- `PUT /v1/loans/{id}` - Update loan
-- `DELETE /v1/loans/{id}` - Delete loan
+- `GET /v1/loans/{uuid}` - Get loan by UUID
+- `PUT /v1/loans/{uuid}` - Update loan
+- `POST /v1/loans/{uuid}/approve` - Approve loan with validators
+- `POST /v1/loans/{uuid}/invest` - Invest in loan
+- `POST /v1/loans/{uuid}/disburse` - Create loan disbursement
 
 ## Development
 
 ### Available Make Commands
 
 ```bash
-make build        # Build the application
-make run          # Run the application
-make test         # Run tests
-make test-coverage # Run tests with coverage
-make clean        # Clean build artifacts
-make deps         # Install dependencies
-make lint         # Run linter
-make dev          # Run in development mode
+make build           # Build the application
+make run             # Run the application
+make test            # Run tests
+make test-coverage   # Run tests with coverage
+make clean           # Clean build artifacts
+make deps            # Install dependencies
+make lint            # Run linter
+make dev             # Run in development mode
+make migrate         # Run database migrations
+make migrate-down    # Rollback last migration
+make migrate-create  # Create new migration file
+make generate-mocks  # Generate mock files for interfaces
 ```
 
 ### Running Tests
 
+The project includes comprehensive unit tests for all layers:
+
 ```bash
+# Run all tests
 go test ./...
+
+# Run tests with coverage
 go test -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out
+
+# Run specific test packages
+go test ./internal/service -v
+go test ./internal/repository -v
+go test ./internal/handlers -v
+
+# Generate mocks for interfaces
+make generate-mocks
 ```
+
+#### Test Coverage
+
+- **Service Layer**: Business logic testing with mocked dependencies
+- **Repository Layer**: Database operations testing with SQLite in-memory database
+- **Handler Layer**: HTTP request/response testing
+- **Mock Generation**: Automatic mock generation using `mockery` for interfaces
 
 ### Database Migrations
 
 The application uses Goose for database migrations. Migrations are SQL files located in the `migrations/` directory.
+
+#### ERD
+
+![Database ERD](assets/erd.png)
 
 #### Running Migrations
 
@@ -150,24 +202,17 @@ The timestamp format is `YYYYMMDDHHMMSS` which ensures proper ordering and avoid
 
 The application uses environment variables for configuration. See `env.example` for available options:
 
+### Server Configuration
 - `SERVER_PORT` - HTTP server port (default: 8080)
 - `SERVER_HOST` - HTTP server host (default: localhost)
+
+### Database Configuration
 - `DB_HOST` - Database host (default: localhost)
 - `DB_PORT` - Database port (default: 3306)
 - `DB_USER` - Database user (default: root)
 - `DB_PASSWORD` - Database password (default: password)
 - `DB_NAME` - Database name (default: loan_service)
 
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite
-6. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
+### External Services
+- `NOTIFICATION_SERVICE_BASE_URL` - Notification service base URL
+- `NOTIFICATION_SERVICE_API_KEY` - Notification service API key
