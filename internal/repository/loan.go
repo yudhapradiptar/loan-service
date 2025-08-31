@@ -4,6 +4,7 @@ import (
 	"context"
 	"loan-service/internal/models"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -31,6 +32,7 @@ func (r *LoanRepository) Rollback(ctx context.Context, db *gorm.DB) error {
 }
 
 func (r *LoanRepository) CreateLoan(ctx context.Context, loan *models.Loan) error {
+	loan.UUID = uuid.New().String()
 	return r.db.WithContext(ctx).Create(loan).Error
 }
 
@@ -54,18 +56,22 @@ func (r *LoanRepository) GetAllLoans(ctx context.Context) ([]models.Loan, error)
 }
 
 func (r *LoanRepository) CreateLoanApproval(ctx context.Context, db *gorm.DB, loanApproval *models.LoanApproval) error {
+	loanApproval.UUID = uuid.New().String()
 	return db.WithContext(ctx).Create(loanApproval).Error
 }
 
 func (r *LoanRepository) CreateLoanApprovalValidator(ctx context.Context, db *gorm.DB, loanApprovalValidator *models.LoanApprovalValidator) error {
+	loanApprovalValidator.UUID = uuid.New().String()
 	return db.WithContext(ctx).Create(loanApprovalValidator).Error
 }
 
 func (r *LoanRepository) CreateLoanApprovalValidatorProof(ctx context.Context, db *gorm.DB, loanApprovalValidatorProof *models.LoanApprovalValidatorProof) error {
+	loanApprovalValidatorProof.UUID = uuid.New().String()
 	return db.WithContext(ctx).Create(loanApprovalValidatorProof).Error
 }
 
 func (r *LoanRepository) CreateInvestment(ctx context.Context, db *gorm.DB, investment *models.Investment) error {
+	investment.UUID = uuid.New().String()
 	return db.WithContext(ctx).Create(investment).Error
 }
 
@@ -76,5 +82,6 @@ func (r *LoanRepository) GetInvestmentsByLoanID(ctx context.Context, loanID int)
 }
 
 func (r *LoanRepository) CreateLoanDisbursement(ctx context.Context, db *gorm.DB, loanDisbursement *models.LoanDisbursement) error {
+	loanDisbursement.UUID = uuid.New().String()
 	return db.WithContext(ctx).Create(loanDisbursement).Error
 }

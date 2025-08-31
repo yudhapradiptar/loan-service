@@ -56,6 +56,12 @@ migrate-create:
 	@read -p "Enter migration name: " name; \
 	goose -dir migrations create $$name sql
 
+# Generate mocks
+generate-mocks:
+	mockery --dir internal/service --name LoanServiceInterface --output mocks --outpkg mocks
+	mockery --dir internal/repository --name LoanRepositoryInterface --output mocks --outpkg mocks
+	mockery --dir internal/client --name NotificationClientInterface --output mocks --outpkg mocks
+
 # Build for production
 build-prod:
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/loan-service main.go

@@ -9,8 +9,6 @@ import (
 	"loan-service/internal/dto"
 	"loan-service/internal/models"
 	"loan-service/internal/repository"
-
-	"github.com/google/uuid"
 )
 
 type LoanService struct {
@@ -29,20 +27,7 @@ func NewLoanService(repo repository.LoanRepositoryInterface, notificationClient 
 }
 
 func (s *LoanService) CreateLoan(ctx context.Context, req *dto.CreateLoanRequest) error {
-	if req.PrincipalAmount <= 0 {
-		return errors.New("loan amount must be greater than zero")
-	}
-
-	if req.InterestRate <= 0 {
-		return errors.New("interest rate must be greater than zero")
-	}
-
-	if req.ROIRate <= 0 {
-		return errors.New("loan term must be greater than zero")
-	}
-
 	loan := &models.Loan{
-		UUID:            uuid.New().String(),
 		BorrowerID:      req.BorrowerID,
 		PrincipalAmount: req.PrincipalAmount,
 		InterestRate:    req.InterestRate,
@@ -110,7 +95,6 @@ func (s *LoanService) ApproveLoanWithValidators(ctx context.Context, req dto.App
 	}
 
 	loanApproval := &models.LoanApproval{
-		UUID:       uuid.New().String(),
 		LoanID:     loan.ID,
 		ApprovedAt: sql.NullTime{Time: req.ApprovedAt, Valid: true},
 	}
@@ -120,7 +104,6 @@ func (s *LoanService) ApproveLoanWithValidators(ctx context.Context, req dto.App
 	}
 
 	loanApprovalValidator := &models.LoanApprovalValidator{
-		UUID:           uuid.New().String(),
 		LoanApprovalID: loanApproval.ID,
 		EmployeeID:     req.EmployeeID,
 	}
@@ -131,7 +114,6 @@ func (s *LoanService) ApproveLoanWithValidators(ctx context.Context, req dto.App
 
 	for _, proof := range req.Proofs {
 		if err := s.repo.CreateLoanApprovalValidatorProof(ctx, tx, &models.LoanApprovalValidatorProof{
-			UUID:                    uuid.New().String(),
 			LoanApprovalValidatorID: loanApprovalValidator.ID,
 			ProofURL:                proof.ProofURL,
 			Category:                proof.Category,
@@ -179,7 +161,6 @@ func (s *LoanService) InvestLoan(ctx context.Context, req dto.InvestLoanRequest)
 	}
 
 	investment := &models.Investment{
-		UUID:       uuid.New().String(),
 		LoanID:     loan.ID,
 		InvestorID: req.InvestorID,
 		Amount:     req.Amount,
@@ -263,7 +244,6 @@ func (s *LoanService) CreateLoanDisbursement(ctx context.Context, req dto.Create
 	}()
 
 	loanDisbursement := &models.LoanDisbursement{
-		UUID:                     uuid.New().String(),
 		LoanID:                   loan.ID,
 		FieldOfficerEmployeeID:   req.EmployeeID,
 		SignedAgreementLetterURL: req.SignedAgreementLetterURL,
